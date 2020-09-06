@@ -93,7 +93,7 @@ public class Address implements BaseDomain{
 	@Override
 	public String getColumnNames() {
 		// TODO Auto-generated method stub
-		return " (city_a, zip_code, municipality_a, street_name, street_number, apartment_number, last_name_a, id_user) ";
+		return " (city_a, zip_code, municipality_a, street_name, street_number, appartment_number, last_name_a, id_user) ";
 	}
 	@Override
 	public String getValues() {
@@ -126,7 +126,7 @@ public class Address implements BaseDomain{
 	public String setUpdateValues() {
 		// TODO Auto-generated method stub
 		return " city_a = ?, zip_code = ?, municipality_a = ?, street_name = ?, street_number = ?,"
-				+ " apartment_number = ?, last_name_a = ?, id_user = ? ";
+				+ " appartment_number = ?, last_name_a = ?, id_user = ? ";
 	}
 	@Override
 	public String getId() {

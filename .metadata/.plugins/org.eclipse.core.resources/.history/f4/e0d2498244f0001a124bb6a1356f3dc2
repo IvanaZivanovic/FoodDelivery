@@ -344,7 +344,7 @@ public class Broker {
 				a.setMunicipality(resultSet.getString("municipality_a"));
 				a.setStreetName(resultSet.getString("street_name"));
 				a.setStreetNo(resultSet.getString("street_number"));
-				a.setApartmentNumber(resultSet.getString("apartment_number"));
+				a.setApartmentNumber(resultSet.getString("appartment_number"));
 				a.setApLastName(resultSet.getString("last_name_a"));
 				addresses.add(a);
 			}
@@ -756,7 +756,7 @@ public class Broker {
 				String municipality = rs.getString("municipality_a");
 				String streetName = rs.getString("street_name");
 				String streetNo = rs.getString("street_number");
-				String apNo = rs.getString("apartment_number");
+				String appNo = rs.getString("appartment_number");
 				String lastName = rs.getString("last_name_a");
 				int idMealOrder = rs.getInt("id_meal_order");
 				int quantity = rs.getInt("quantity");
@@ -797,7 +797,7 @@ public class Broker {
 						a.setStreetName(streetName);
 						a.setStreetNo(streetNo);
 						a.setApLastName(lastName);
-						a.setApartmentNumber(apNo);
+						a.setApartmentNumber(appNo);
 						order.setAddress(a);
 						order.addMealOrder(mOrder);
 						orders.add(order);
@@ -820,7 +820,7 @@ public class Broker {
 							a.setStreetName(streetName);
 							a.setStreetNo(streetNo);
 							a.setApLastName(lastName);
-							a.setApartmentNumber(apNo);
+							a.setApartmentNumber(appNo);
 							order.setAddress(a);
 							orders.add(order);
 							

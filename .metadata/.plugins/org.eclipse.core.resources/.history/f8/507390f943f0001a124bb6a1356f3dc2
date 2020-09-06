@@ -12,19 +12,19 @@ public class Address implements BaseDomain{
 	private String municipality;
 	private String streetName;
 	private String streetNo;
-	private String apartmentNumber;
-	private String apLastName;
+	private String appNumber;
+	private String appLastName;
 	private User user;
 	public Address(String city, String zipCode, String municipality, String streetName, String streetNo,
-			String apartmentNumber, String apLastName, User user) {
+			String appNumber, String appLastName, User user) {
 		super();
 		this.city = city;
 		this.zipCode = zipCode;
 		this.municipality = municipality;
 		this.streetName = streetName;
 		this.streetNo = streetNo;
-		this.apartmentNumber = apartmentNumber;
-		this.apLastName = apLastName;
+		this.appNumber = appNumber;
+		this.appLastName = appLastName;
 		this.user = user;
 	}
 	public Address() {
@@ -66,18 +66,17 @@ public class Address implements BaseDomain{
 	public void setStreetNo(String streetNo) {
 		this.streetNo = streetNo;
 	}
-		
-	public String getApartmentNumber() {
-		return apartmentNumber;
+	public String getAppNumber() {
+		return appNumber;
 	}
-	public void setApartmentNumber(String apartmentNumber) {
-		this.apartmentNumber = apartmentNumber;
+	public void setAppNumber(String appNumber) {
+		this.appNumber = appNumber;
 	}
-	public String getApLastName() {
-		return apLastName;
+	public String getAppLastName() {
+		return appLastName;
 	}
-	public void setApLastName(String apLastName) {
-		this.apLastName = apLastName;
+	public void setAppLastName(String appLastName) {
+		this.appLastName = appLastName;
 	}
 	public User getUser() {
 		return user;
@@ -93,7 +92,7 @@ public class Address implements BaseDomain{
 	@Override
 	public String getColumnNames() {
 		// TODO Auto-generated method stub
-		return " (city_a, zip_code, municipality_a, street_name, street_number, apartment_number, last_name_a, id_user) ";
+		return " (city_a, zip_code, municipality_a, street_name, street_number, appartment_number, last_name_a, id_user) ";
 	}
 	@Override
 	public String getValues() {
@@ -108,8 +107,8 @@ public class Address implements BaseDomain{
 			preparedStatement.setString(3, municipality);
 			preparedStatement.setString(4, streetName);
 			preparedStatement.setString(5, streetNo);
-			preparedStatement.setString(6, apartmentNumber);
-			preparedStatement.setString(7, apLastName);
+			preparedStatement.setString(6, appNumber);
+			preparedStatement.setString(7, appLastName);
 			preparedStatement.setInt(8, getUser().getIdUser());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -126,7 +125,7 @@ public class Address implements BaseDomain{
 	public String setUpdateValues() {
 		// TODO Auto-generated method stub
 		return " city_a = ?, zip_code = ?, municipality_a = ?, street_name = ?, street_number = ?,"
-				+ " apartment_number = ?, last_name_a = ?, id_user = ? ";
+				+ " appartment_number = ?, last_name_a = ?, id_user = ? ";
 	}
 	@Override
 	public String getId() {
@@ -141,8 +140,8 @@ public class Address implements BaseDomain{
 			preparedStatement.setString(3, municipality);
 			preparedStatement.setString(4, streetName);
 			preparedStatement.setString(5, streetNo);
-			preparedStatement.setString(6, apartmentNumber);
-			preparedStatement.setString(7, apLastName);
+			preparedStatement.setString(6, appNumber);
+			preparedStatement.setString(7, appLastName);
 			preparedStatement.setInt(8, getUser().getIdUser());
 			preparedStatement.setInt(9, idAddress);
 			
