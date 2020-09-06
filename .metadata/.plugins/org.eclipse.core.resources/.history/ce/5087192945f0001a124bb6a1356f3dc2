@@ -1,7 +1,6 @@
 package com.comtrade.view.user;
 
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
+
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -48,7 +47,7 @@ import javax.swing.JTable;
 import java.awt.Color;
 import java.awt.Font;
 
-public class OrderCartFrame extends JFrame {
+public class OrderCartFromAllFrame extends JFrame {
 
 	private JPanel contentPane;
 	private Restaurant r;
@@ -81,8 +80,13 @@ public class OrderCartFrame extends JFrame {
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 
 	 */
-	public OrderCartFrame(User user, Restaurant restaurant) throws ClassNotFoundException, IOException {
-		r = restaurant;
+	public OrderCartFromAllFrame(User user, String restName) throws ClassNotFoundException, IOException {
+		Restaurant restaurant = new Restaurant();
+		restaurant.setName(restName);
+		
+		TransferObject requestRest = TransferObject.create(restaurant, ConstantFc.RESTAURANT, ConstantBl.GET_ONE_R_NAME);
+		TransferObject responseRest = FrontController.getInstance().execute(requestRest);
+		r = (Restaurant) responseRest.getResponse();
 		u = user;
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -90,12 +94,15 @@ public class OrderCartFrame extends JFrame {
 		contentPane = new JPanel(){  
             public void paintComponent(Graphics g) {  
                 Image img = Toolkit.getDefaultToolkit().getImage(  
-                		OrderCartFrame.class.getResource("/images/order-wallpaper.JPG"));  
+                		OrderCartFromAllFrame.class.getResource("/images/order-wallpaper.JPG"));  
                 g.drawImage(img, 0, 0, this.getWidth(), this.getHeight(), this);  
            }  
       };
-      	
-      	      			
+      
+      	TransferObject requestAddress = TransferObject.create(u, ConstantFc.ADDRESS, ConstantBl.GET_ALL_U);
+		TransferObject responseAddress = FrontController.getInstance().execute(requestAddress);
+		addresses = (Set<Address>) responseAddress.getResponse();
+		
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
@@ -142,19 +149,6 @@ public class OrderCartFrame extends JFrame {
 		
 		ImageIcon logo = new ImageIcon(r.getPhoto());
 		JButton btnLogo = new JButton(logo);
-		/*btnLogo.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				try {
-					getAddresses();
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});*/
 		btnLogo.setBounds(995, 66, 80, 80);
 		contentPane.add(btnLogo);
 		
@@ -344,13 +338,13 @@ public class OrderCartFrame extends JFrame {
 		JLabel lblMinimalOrder = new JLabel("Minimal Order");
 		lblMinimalOrder.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblMinimalOrder.setForeground(Color.WHITE);
-		lblMinimalOrder.setBounds(857, 67, 128, 14);
+		lblMinimalOrder.setBounds(857, 50, 128, 14);
 		contentPane.add(lblMinimalOrder);
 		
-		lblMinRest = new JLabel(String.valueOf(restaurant.getMinOrder()));
+		lblMinRest = new JLabel(String.valueOf(r.getMinOrder()));
 		lblMinRest.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblMinRest.setForeground(Color.WHITE);
-		lblMinRest.setBounds(891, 103, 94, 14);
+		lblMinRest.setBounds(891, 93, 94, 14);
 		contentPane.add(lblMinRest);
 		
 		JLabel lblAddresses = new JLabel("Addresses:");
@@ -365,7 +359,7 @@ public class OrderCartFrame extends JFrame {
 					if(cbAddresses.getSelectedItem().toString().contains(a.getStreetName()) && 
 							cbAddresses.getSelectedItem().toString().contains(a.getStreetNo()) &&
 									cbAddresses.getSelectedItem().toString().contains(a.getMunicipality()) &&
-									cbAddresses.getSelectedItem().toString().contains(a.getApLastName()) &&
+									cbAddresses.getSelectedItem().toString().contains(a.getAppLastName()) &&
 									cbAddresses.getSelectedItem().toString().contains(a.getCity())) {
 						idAddress = a.getIdAddress();
 					}
@@ -375,48 +369,34 @@ public class OrderCartFrame extends JFrame {
 		cbAddresses.setBounds(377, 35, 321, 20);
 		contentPane.add(cbAddresses);
 		
-		JButton btnAddAddress = new JButton("Add an Address");
-		btnAddAddress.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				AddressFrame af = null;
-				try {
-					af = new AddressFrame(u);
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+		for (Address a : addresses) {
+			cbAddresses.addItem(a.getStreetName() + " " + a.getStreetNo() + ", " + a.getMunicipality() 
+			+ ", " + a.getCity() + ", " + a.getAppLastName());
+		}cbAddresses.setSelectedIndex(0);
+			JButton btnAddAddress = new JButton("Add an Address");
+			btnAddAddress.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					AddressFrame af = null;
+					try {
+						af = new AddressFrame(u);
+					} catch (ClassNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					af.setVisible(true);
 				}
-				af.setVisible(true);
-			}
-		});
-		btnAddAddress.setBounds(745, 34, 128, 23);
-		contentPane.add(btnAddAddress);
-		
-		//cbAddresses.setSelectedIndex(0);
+			});
+			btnAddAddress.setBounds(730, 34, 117, 23);
+			contentPane.add(btnAddAddress);
 		
 		
 		
 		TransferObject reqMeal = TransferObject.create(r, ConstantFc.MEAL, ConstantBl.GET_R_MEAL);
 		TransferObject responseMeal = FrontController.getInstance().execute(reqMeal);
 		meals = (Set<Meal>) responseMeal.getResponse();
-		
-		getAddresses();
-		
-	}
-
-	private void getAddresses() throws ClassNotFoundException, IOException {
-		
-		TransferObject requestAddress = TransferObject.create(u, ConstantFc.ADDRESS, ConstantBl.GET_ALL_U);
-		TransferObject responseAddress = FrontController.getInstance().execute(requestAddress);
-		addresses = (Set<Address>) responseAddress.getResponse();
-		
-		cbAddresses.removeAllItems();
-		for (Address a : addresses) {
-			cbAddresses.addItem(a.getStreetName() + " " + a.getStreetNo() + ", " + a.getMunicipality() 
-			+ ", " + a.getCity() + ", " + a.getApLastName());
-		}
 		
 	}
 }

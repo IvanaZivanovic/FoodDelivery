@@ -144,8 +144,8 @@ public class AddressFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				Address address = new Address();
 				address.setUser(u);
-				address.setApLastName(tfAppLastName.getText());
-				address.setApartmentNumber(tfAppNo.getText());
+				address.setAppLastName(tfAppLastName.getText());
+				address.setAppNumber(tfAppNo.getText());
 				address.setCity(tfCity.getText());
 				address.setMunicipality(tfMunicipality.getText());
 				address.setZipCode(tfZipCOde.getText());
@@ -178,8 +178,8 @@ public class AddressFrame extends JFrame {
 				Address address = new Address();
 				address.setUser(u);
 				address.setIdAddress(idAddress);
-				address.setApLastName(tfAppLastName.getText());
-				address.setApartmentNumber(tfAppNo.getText());
+				address.setAppLastName(tfAppLastName.getText());
+				address.setAppNumber(tfAppNo.getText());
 				address.setCity(tfCity.getText());
 				address.setMunicipality(tfMunicipality.getText());
 				address.setZipCode(tfZipCOde.getText());
@@ -302,7 +302,7 @@ public class AddressFrame extends JFrame {
 		if(addresses != null) {
 			for (Address a : addresses) {
 				Object [] rowObjects = {a.getIdAddress(), a.getCity(), a.getZipCode(), a.getMunicipality(), a.getStreetName(), 
-						a.getStreetNo(), a.getApartmentNumber(), a.getApLastName()};
+						a.getStreetNo(), a.getAppNumber(), a.getAppLastName()};
 				dtm.addRow(rowObjects);
 			
 		}

@@ -284,7 +284,7 @@ public class RestaurantOrdersFrame extends JFrame {
 			for(Order or : orders) {
 				if(or.getIdOrder() == idOrder) {
 					Object [] rowAddress = {or.getAddress().getMunicipality(), or.getAddress().getStreetName(),
-							or.getAddress().getStreetNo(), or.getAddress().getApartmentNumber(), or.getAddress().getApLastName(), or.getUser().getPhoneNumber()};
+							or.getAddress().getStreetNo(), or.getAddress().getAppNumber(), or.getAddress().getAppLastName(), or.getUser().getPhoneNumber()};
 						dtmAddress.addRow(rowAddress);
 					}
 				}

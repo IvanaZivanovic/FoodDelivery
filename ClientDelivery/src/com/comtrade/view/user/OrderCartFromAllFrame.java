@@ -359,7 +359,7 @@ public class OrderCartFromAllFrame extends JFrame {
 					if(cbAddresses.getSelectedItem().toString().contains(a.getStreetName()) && 
 							cbAddresses.getSelectedItem().toString().contains(a.getStreetNo()) &&
 									cbAddresses.getSelectedItem().toString().contains(a.getMunicipality()) &&
-									cbAddresses.getSelectedItem().toString().contains(a.getAppLastName()) &&
+									cbAddresses.getSelectedItem().toString().contains(a.getApLastName()) &&
 									cbAddresses.getSelectedItem().toString().contains(a.getCity())) {
 						idAddress = a.getIdAddress();
 					}
@@ -371,7 +371,7 @@ public class OrderCartFromAllFrame extends JFrame {
 		
 		for (Address a : addresses) {
 			cbAddresses.addItem(a.getStreetName() + " " + a.getStreetNo() + ", " + a.getMunicipality() 
-			+ ", " + a.getCity() + ", " + a.getAppLastName());
+			+ ", " + a.getCity() + ", " + a.getApLastName());
 		}cbAddresses.setSelectedIndex(0);
 			JButton btnAddAddress = new JButton("Add an Address");
 			btnAddAddress.addActionListener(new ActionListener() {
