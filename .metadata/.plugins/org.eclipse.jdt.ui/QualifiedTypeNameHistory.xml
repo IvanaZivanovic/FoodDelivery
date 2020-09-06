@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="com.comtrade.thread.TimeThread"/>
+<fullyQualifiedTypeName name="com.comtrade.thread.DateThread"/>
+<fullyQualifiedTypeName name="com.comtrade.domain.RestMeal"/>
+<fullyQualifiedTypeName name="java.lang.String"/>
+<fullyQualifiedTypeName name="com.comtrade.domain.Meal"/>
+<fullyQualifiedTypeName name="com.comtrade.domain.Cuisine"/>
+<fullyQualifiedTypeName name="com.comtrade.domain.Category"/>
+<fullyQualifiedTypeName name="com.comtrade.domain.DtoMealRest"/>
+</qualifiedTypeNameHistroy>

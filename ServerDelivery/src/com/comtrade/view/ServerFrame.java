@@ -1,0 +1,105 @@
+package com.comtrade.view;
+
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Toolkit;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+
+import com.comtrade.thread.DateThread;
+import com.comtrade.thread.ServerThread;
+import com.comtrade.thread.TimeThread;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Font;
+
+public class ServerFrame extends JFrame {
+
+	private JPanel contentPane;
+	private DateThread dateThread;
+	private TimeThread timeThread;
+	
+	
+
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					ServerFrame frame = new ServerFrame();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public ServerFrame() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 655, 526);
+		contentPane = new JPanel() {  
+            public void paintComponent(Graphics g) {  
+                Image img = Toolkit.getDefaultToolkit().getImage(  
+                		ServerFrame.class.getResource("/images/server-background.jpg"));  
+                g.drawImage(img, 0, 0, this.getWidth(), this.getHeight(), this);  
+           }  
+      };  
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		ImageIcon run = new ImageIcon("photos/run-black.JPG");
+		JButton btnRun = new JButton("RUN", run);
+		btnRun.setBackground(Color.WHITE);
+		btnRun.setForeground(Color.BLACK);
+		btnRun.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				ServerThread serverThread = new ServerThread();
+							
+				serverThread.start();
+				timeThread.start();
+				dateThread.start();
+				;
+				
+				
+			}
+		});
+		btnRun.setVerticalTextPosition(SwingConstants.BOTTOM);
+	    btnRun.setHorizontalTextPosition(SwingConstants.CENTER);
+		btnRun.setBounds(265, 225, 99, 123);
+		contentPane.add(btnRun);
+		
+		JLabel lblTime = new JLabel();
+		lblTime.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		lblTime.setForeground(Color.WHITE);
+		lblTime.setBounds(507, 419, 81, 14);
+		contentPane.add(lblTime);
+		timeThread = new TimeThread(lblTime);
+		
+		JLabel lblDate = new JLabel();
+		lblDate.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		lblDate.setForeground(Color.WHITE);
+		lblDate.setBounds(421, 444, 180, 32);
+		contentPane.add(lblDate);
+		dateThread = new DateThread(lblDate);
+		
+		
+		//timeThread.start();
+		//dateThread.start();
+	}
+}

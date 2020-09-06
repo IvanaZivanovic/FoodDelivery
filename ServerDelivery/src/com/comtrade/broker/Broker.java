@@ -1,0 +1,917 @@
+package com.comtrade.broker;
+
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.comtrade.connection.MyConnection;
+import com.comtrade.domain.Address;
+import com.comtrade.domain.BaseDomain;
+import com.comtrade.domain.Category;
+import com.comtrade.domain.Cuisine;
+import com.comtrade.domain.DtoMealRest;
+import com.comtrade.domain.Meal;
+import com.comtrade.domain.MealOrder;
+import com.comtrade.domain.MySqlException;
+import com.comtrade.domain.Order;
+import com.comtrade.domain.RestCat;
+import com.comtrade.domain.RestCuisine;
+import com.comtrade.domain.Restaurant;
+import com.comtrade.domain.User;
+
+
+
+public class Broker {
+	public void insert(BaseDomain baseDomain) throws MySqlException {
+		//"insert into restaurant (name, min_order, city, municipality) values (?, ?, ?, ?)"
+		String sql = "insert into " + baseDomain.getTableName()+ " " +baseDomain.getColumnNames()+" values "+ baseDomain.getValues();
+		try {
+			PreparedStatement preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			baseDomain.setValuesInsert(preparedStatement);
+			preparedStatement.execute();
+		} catch (SQLException e) {
+			throw new MySqlException("An insert problem occured "+e);
+		}
+	}
+
+	public Set<BaseDomain> selectAll(BaseDomain baseDomain) throws MySqlException {
+		String sql = "select * from " + baseDomain.getTableName();
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			resultSet = preparedStatement.executeQuery();
+			
+		} catch (SQLException e) {
+			throw new MySqlException(e.toString());
+		}
+		return baseDomain.selectAll(resultSet);
+	}
+
+	public void update(BaseDomain baseDomain) throws MySqlException {
+		String sql = "update " + baseDomain.getTableName() + " set " + baseDomain.setUpdateValues() +
+				" where " +baseDomain.getId() + " = ? ";
+		try {
+			PreparedStatement preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			baseDomain.setUpdate(preparedStatement);
+			preparedStatement.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+	}
+
+	public void delete(BaseDomain baseDomain) throws MySqlException {
+		//delete from restaurant where id_restaurant = ?
+		String sql = "delete from " + baseDomain.getTableName() + " where " + baseDomain.getId() + " = ? ";
+		PreparedStatement preparedStatement;
+		try {
+			preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			baseDomain.setDelete(preparedStatement);
+			preparedStatement.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+
+		
+	}
+
+	public Set<Meal> selectAllMeal(Meal meal) throws MySqlException {
+		String sqlString = "select * from meal INNER JOIN category INNER join cuisine "
+				+ "where meal.id_category = category.id_category and "
+				+ "meal.id_cuisine = cuisine.id_cuisine order by cuisine.name_cuisine";
+		ResultSet resultSet = null;
+		Set<Meal> meals = new LinkedHashSet<Meal>();
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sqlString);
+			resultSet = ps.executeQuery();
+			while (resultSet.next()) {
+				Meal m = new Meal(); Cuisine cu = new Cuisine(); Category cat = new Category();
+				m.setIdMeal(resultSet.getInt("id_meal")); 
+				m.setName(resultSet.getString("name_meal"));
+				m.setPrice(resultSet.getDouble("price"));
+				m.setSize(resultSet.getString("size"));
+				cu.setIdCuisine(resultSet.getInt("id_cuisine"));
+				cu.setName(resultSet.getString("name_cuisine"));
+				cat.setIdCategory(resultSet.getInt("id_category"));
+				cat.setName(resultSet.getString("name_category"));
+				m.setCategory(cat); m.setCuisine(cu);
+				meals.add(m);
+								
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+		
+		return meals;
+	}
+
+	public User login(User user) throws MySqlException {
+		String sql = "select * from user INNER join user_role on user.id_user = user_role.id_user "
+				+ "where user.username = ? and user.password = ?";
+		User user2 = new User();
+		ResultSet resultSet = null;
+			try {
+				PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+				ps.setString(1, user.getUsername());
+				ps.setString(2, user.getPassword());
+				resultSet = ps.executeQuery();
+				while (resultSet.next()) {
+					user2.setStatus(resultSet.getInt("status"));
+					user2.setIdRole(resultSet.getInt("id_role"));
+					user2.setUsername(resultSet.getString("username"));
+					user2.setIdUser(resultSet.getInt("id_user"));
+					user2.setFirstName(resultSet.getString("first_name"));
+					user2.setLastName(resultSet.getString("last_name"));
+					user2.setEmail(resultSet.getString("email"));
+					user2.setPhoneNumber(resultSet.getString("phone_number"));
+					
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				throw new MySqlException(e.toString());
+			}
+		return user2;
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Set<Restaurant> selectAllRestaurant(Restaurant restaurant) throws MySqlException {
+		Set<Restaurant>restaurants = new LinkedHashSet<Restaurant>();
+		String sql = "SELECT * FROM `restaurant` inner join user where restaurant.id_user = user.id_user";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			resultSet = preparedStatement.executeQuery();
+			while(resultSet.next()) {
+				Restaurant r = new Restaurant(resultSet.getString("name_restaurant"), resultSet.getString("city"),
+						resultSet.getString("municipality"), resultSet.getDouble("min_order"));
+				r.setIdRestaurant(resultSet.getInt("id_restaurant"));
+				r.setOpenTime(resultSet.getTime("open_time").toLocalTime());
+				r.setCloseTime(resultSet.getTime("close_time").toLocalTime());
+				r.setPhoto(resultSet.getString("photo_restaurant"));
+				User user = new User();
+				user.setIdUser(resultSet.getInt("id_user"));
+				user.setUsername(resultSet.getString("username"));
+				r.setUser(user);
+				restaurants.add(r);
+				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+			
+		
+		return restaurants;
+	}
+
+	
+	public User insertUser(User user) throws MySqlException{
+		String sql = "Insert into user (first_name, last_name, email, phone_number, username, password, status) values (?, ?, ?, ?, ?, ?, ?)";
+		int idRole = user.getIdRole();
+		ResultSet resultSet = null;
+		int idUser = 0;
+		try {
+			PreparedStatement preparedStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			preparedStatement.setString(1, user.getFirstName());
+			preparedStatement.setString(2, user.getLastName());
+			preparedStatement.setString(3, user.getEmail());
+			preparedStatement.setString(4, user.getPhoneNumber());
+			preparedStatement.setString(5, user.getUsername());
+			preparedStatement.setString(6, user.getPassword());
+			preparedStatement.setInt(7, user.getStatus());
+			preparedStatement.execute();
+			
+			String sqlString = "select id_user from user where username = ?";
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sqlString);
+			ps.setString(1, user.getUsername());
+			resultSet = ps.executeQuery();
+			while (resultSet.next()) {
+				idUser = resultSet.getInt("id_user");
+			}
+			
+			String sqlUR = "insert into user_role (id_user, id_role) values (?, ?)";
+			PreparedStatement ps2 = MyConnection.getInstance().getConnection().prepareStatement(sqlUR);
+			ps2.setInt(1, idUser);
+			ps2.setInt(2, idRole);
+			ps2.execute();
+			user.setIdUser(idUser);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+		return user;
+		
+		
+	}
+
+	public Set<User> selectAllAdminR() throws MySqlException{
+		Set<User> admins = new LinkedHashSet<User>();
+		String sql = "select * from user inner JOIN user_role where user.id_user = user_role.id_user and user_role.id_role = ?";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, 2);
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				User user = new User();
+				user.setIdUser(resultSet.getInt("id_user"));
+				user.setFirstName(resultSet.getString("first_name"));
+				user.setUsername(resultSet.getString("username"));
+				user.setEmail(resultSet.getString("email"));
+				user.setPhoneNumber(resultSet.getString("phone_number"));
+				admins.add(user);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+		
+		return admins;
+	}
+
+	public Restaurant selectOneRestaurant(Restaurant restaurant) throws MySqlException{
+		String sqlString = "SELECT * FROM restaurant INNER join user on restaurant.id_user = user.id_user where user.username = ? ";
+		Restaurant r =  new Restaurant();
+		/*Set<Cuisine> cuisines = new LinkedHashSet<Cuisine>();
+		Set<Category> categories = new LinkedHashSet<Category>();
+		Set<Meal> meals = new LinkedHashSet<Meal>();
+		r.setCuisines(cuisines);*/
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sqlString);
+			ps.setString(1, restaurant.getUser().getUsername());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				r.setName(resultSet.getString("name_restaurant"));
+				r.setCity(resultSet.getString("city"));
+				r.setMunicipallity(resultSet.getString("municipality"));
+				r.setOpenTime(resultSet.getTime("open_time").toLocalTime());
+				r.setCloseTime(resultSet.getTime("close_time").toLocalTime());
+				r.setMinOrder(resultSet.getDouble("min_order"));
+				r.setPhoto(resultSet.getString("photo_restaurant"));
+				r.setIdRestaurant(resultSet.getInt("id_restaurant"));
+				User userResponse = new User();
+				userResponse.setIdUser(resultSet.getInt("id_user"));
+				userResponse.setUsername(resultSet.getString("username"));
+				r.setUser(userResponse);
+								
+				/*Cuisine cuisine = new Cuisine();
+				cuisine.setIdCuisine(resultSet.getInt("id_cuisine"));
+				cuisine.setName(resultSet.getString("name_cuisine"));
+				cuisines.add(cuisine);*/
+				
+				
+											
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new MySqlException(e.toString());
+		}
+		
+		return r;
+	}
+
+	public void insertRestCuisine(Restaurant restaurant) throws MySqlException{
+		String sql = "insert into restaurant_cuisine (id_restaurant, id_cuisine) values (?,?)";
+		PreparedStatement ps;
+		for (Cuisine c : restaurant.getCuisines()) {
+			try {
+				ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+				ps.setInt(1, restaurant.getIdRestaurant());
+				ps.setInt(2, c.getIdCuisine());
+				ps.execute();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				throw new MySqlException(e.toString());
+			} 
+			
+		}
+	}
+	
+
+	public Set<RestCat> selectRestCat(Restaurant r) throws MySqlException{
+		String sql = "select * from category inner join restaurant_category on "
+				+ "category.id_category = restaurant_category.id_category where id_restaurant = ? "
+				+ "order by category.name_category";
+		ResultSet resultSet = null;
+		Set<RestCat> categories = new LinkedHashSet<RestCat>();
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, r.getIdRestaurant());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				RestCat restCat = new RestCat();
+				restCat.setIdCategory(resultSet.getInt("id_category"));
+				restCat.setNameCategory(resultSet.getString("name_category"));
+				restCat.setIdRestCat(resultSet.getInt("id_restaurant_category"));
+				restCat.setIdRestaurant(resultSet.getInt("id_restaurant"));
+				categories.add(restCat);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return categories;
+		
+	}
+
+	public Set<Address> selectAllAddress4User(User user) throws MySqlException{
+		Set<Address> addresses = new LinkedHashSet<Address>();
+		String sql = "select * from address where id_user = ?";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, user.getIdUser());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				Address a = new Address();
+				a.setIdAddress(resultSet.getInt("id_address"));
+				a.setCity(resultSet.getString("city_a"));
+				a.setZipCode(resultSet.getString("zip_code"));
+				a.setMunicipality(resultSet.getString("municipality_a"));
+				a.setStreetName(resultSet.getString("street_name"));
+				a.setStreetNo(resultSet.getString("street_number"));
+				a.setAppNumber(resultSet.getString("appartment_number"));
+				a.setAppLastName(resultSet.getString("last_name_a"));
+				addresses.add(a);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return addresses;
+	}
+
+	public Set<RestCuisine> selectRestCuisine(Restaurant restaurant) throws MySqlException{
+		Set<RestCuisine> cuisines = new LinkedHashSet<RestCuisine>();
+		String sql = "Select * from cuisine inner join restaurant_cuisine on "
+				+ "cuisine.id_cuisine = restaurant_cuisine.id_cuisine where id_restaurant = ? "
+				+ "order by cuisine.name_cuisine";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, restaurant.getIdRestaurant());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				RestCuisine c =  new RestCuisine();
+				c.setNameCuisine(resultSet.getString("name_cuisine"));
+				c.setIdRestCuisine(resultSet.getInt("id_restaurant_cuisine"));
+				cuisines.add(c);
+				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return cuisines;
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void insertRestCat(Restaurant r) throws MySqlException{
+		String sql = "insert into restaurant_category (id_restaurant, id_category) values (?,?)";
+		PreparedStatement ps;
+		for (Category c : r.getCategories()) {
+			try {
+				ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+				ps.setInt(1, r.getIdRestaurant());
+				ps.setInt(2, c.getIdCategory());
+				ps.execute();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				throw new MySqlException(e.toString());
+			} 
+			
+		}
+			
+	}
+
+	public Set<Meal> selectMeals4Cat(Category category) throws MySqlException{
+		Set<Meal> meals = new LinkedHashSet<Meal>();
+		String sql = "select * from meal inner join category on meal.id_category = category.id_category "
+				+ "where meal.id_category = ? order by meal.name_meal";
+		ResultSet resultset = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, category.getIdCategory());
+			resultset = ps.executeQuery();
+			while(resultset.next()) {
+				Meal meal = new Meal();
+				Category c = new Category();
+				//Cuisine cu = new Cuisine();
+				//cu.setIdCuisine(resultset.getInt("id_cuisine"));
+				c.setIdCategory(resultset.getInt("id_category"));
+				c.setName(resultset.getString("name_category"));
+				meal.setCategory(c);
+				//meal.setCuisine(cu);
+				meal.setName(resultset.getString("name_meal"));
+				meal.setIdMeal(resultset.getInt("id_meal"));
+				meal.setPrice(resultset.getDouble("price"));
+				meal.setSize(resultset.getString("size"));
+				meals.add(meal);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return meals;
+		
+		
+	}
+
+	public void insertRestMeal(Restaurant restaurant) throws MySqlException {
+		String sql = "insert into meal_restaurant (id_restaurant, id_meal) values (?,?)";
+		PreparedStatement ps;
+		for (Meal m : restaurant.getMeals()) {
+			try {
+				ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+				ps.setInt(1, restaurant.getIdRestaurant());
+				ps.setInt(2, m.getIdMeal());
+				ps.execute();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				throw new MySqlException(e.toString());
+			} 
+			
+		}
+		
+	}
+
+	public Set<DtoMealRest> selectRestMeal(Restaurant restaurant) throws MySqlException{
+		Set<DtoMealRest> meals = new LinkedHashSet<DtoMealRest>();
+		String sql = "Select * from meal inner join meal_restaurant on meal.id_meal = meal_restaurant.id_meal "
+				+ "inner join category on meal.id_category = category.id_category where id_restaurant = ? "
+				+ "order by category.name_category";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, restaurant.getIdRestaurant());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				DtoMealRest restMeal = new DtoMealRest();
+				restMeal.setName(resultSet.getString("name_meal"));
+				restMeal.setIdMeal(resultSet.getInt("id_meal"));
+				restMeal.setIdRestMeal(resultSet.getInt("id_meal_restaurant"));
+				restMeal.setSize(resultSet.getString("size"));
+				restMeal.setPrice(resultSet.getDouble("price"));
+				Category category = new Category();
+				category.setIdCategory(resultSet.getInt("id_category"));
+				category.setName(resultSet.getString("name_category"));
+				restMeal.setCategory(category);
+				
+				meals.add(restMeal);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return meals;
+	}
+
+	public Set<Category> getCat4Rest(Restaurant restaurant) throws MySqlException{
+		Set<Category> categories = new LinkedHashSet<Category>();
+		String sql = "select * from category INNER JOIN restaurant_category on category.id_category "
+				+ "= restaurant_category.id_category where restaurant_category.id_restaurant = ? "
+				+ "order by category.name_category";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, restaurant.getIdRestaurant());
+			resultSet = ps.executeQuery();
+			while(resultSet.next()) {
+				Category cat = new Category();
+				cat.setIdCategory(resultSet.getInt("id_category"));
+				cat.setName(resultSet.getString("name_category"));
+				categories.add(cat);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return categories;
+	}
+
+	public Set<Meal> selectMealsFromRest(Restaurant restaurant) throws MySqlException{
+		Set<Meal> meals = new LinkedHashSet<Meal>();
+		String sql = "select * from meal INNER join meal_restaurant on "
+				+ "meal.id_meal = meal_restaurant.id_meal where meal_restaurant.id_restaurant = ?";
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement pStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			pStatement.setInt(1, restaurant.getIdRestaurant());
+			resultSet = pStatement.executeQuery();
+			while(resultSet.next()) {
+				Meal meal = new Meal();
+				meal.setIdMeal(resultSet.getInt("id_meal"));
+				meal.setName(resultSet.getString("name_meal"));
+				meal.setSize(resultSet.getString("size"));
+				meal.setPrice(resultSet.getDouble("price"));
+				Category cat = new Category();
+				cat.setIdCategory(resultSet.getInt("id_category"));
+				Cuisine cu = new Cuisine();
+				cu.setIdCuisine(resultSet.getInt("id_cuisine"));
+				meal.setCategory(cat); meal.setCuisine(cu);
+				meals.add(meal);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return meals;
+	}
+
+	public void saveOrder(Order order) throws MySqlException{
+		String sql = "insert into `order` (amount, date, time, status, message_order, id_user, id_address, id_restaurant)"
+				+ " VALUES (?,?,?,?,?,?,?,?)";
+		int idOrder = 0;
+		ResultSet resultSet = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setDouble(1, order.getAmount());
+			ps.setDate(2, Date.valueOf(order.getDate()));
+			ps.setTime(3, Time.valueOf(order.getTime()));
+			ps.setString(4, "waiting");
+			ps.setString(5, order.getMessage());
+			ps.setInt(6, order.getUser().getIdUser());
+			ps.setInt(7, order.getAddress().getIdAddress());
+			ps.setInt(8, order.getRestaurant().getIdRestaurant());
+			ps.execute();
+			
+			String sqlId = "select max(id_order) from `order`";
+			PreparedStatement ps2 = MyConnection.getInstance().getConnection().prepareStatement(sqlId);
+			resultSet = ps2.executeQuery();
+			while(resultSet.next()) {
+				idOrder = resultSet.getInt("max(id_order)");
+			}
+			
+			String sqlMealOrder = "insert into meal_order (id_meal, id_order, quantity, comment) "
+					+ "values (?,?,?,?)";
+			PreparedStatement ps3;
+			for (MealOrder mo : order.getMealOrdersList()) {
+				ps3 = MyConnection.getInstance().getConnection().prepareStatement(sqlMealOrder);
+				ps3.setInt(1, mo.getMeal().getIdMeal());
+				ps3.setInt(2, idOrder);
+				ps3.setInt(3, mo.getQuantity());
+				ps3.setString(4, mo.getComment());
+				ps3.execute();
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+
+	public List<Order> selectOrders4User(User user) throws MySqlException{
+		List<Order> orders = new ArrayList<Order>();
+		String sql = "select * from `order` inner join restaurant on `order`.`id_restaurant` = "
+				+ "restaurant.id_restaurant inner join meal_order on `order`.id_order = meal_order.id_order "
+				+ "inner join meal on meal.id_meal = meal_order.id_meal where `order`.id_user = ? order by `order`.id_order DESC";
+						
+		ResultSet rs = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setInt(1, user.getIdUser());
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				
+				int id_order =  rs.getInt("id_order");
+				double amount = rs.getDouble("amount");
+				int idMealOrder = rs.getInt("id_meal_order");
+				int quantity = rs.getInt("quantity");
+				double price = rs.getDouble("price");
+				String restName = rs.getString("name_restaurant");
+				String mealName = rs.getString("name_meal");
+				String status = rs.getString("status");
+				String message = rs.getString("message_order");
+				Date date = rs.getDate("date");
+				Time time = rs.getTime("time");
+				Meal m = new Meal();
+				m.setName(mealName);
+				m.setPrice(price);
+				MealOrder mOrder = new MealOrder();
+				mOrder.setMeal(m);
+				mOrder.setIdMealOrder(idMealOrder);
+				mOrder.setQuantity(quantity);
+					
+				if(orders.size() == 0) {
+					Order order = new Order();
+					order.setIdOrder(id_order);
+					order.setAmount(amount);
+					order.setDate(date.toLocalDate());
+					order.setTime(time.toLocalTime());
+					order.setStatus(status);
+					order.setMessage(message);
+					Restaurant rest = new Restaurant();
+					rest.setName(restName);
+					order.setRestaurant(rest);
+					order.addMealOrder(mOrder);
+					orders.add(order);
+						
+					} else {if(orders.get(orders.size()-1).getIdOrder() != id_order) {
+							Order order = new Order();
+							order.setIdOrder(id_order);
+							order.setAmount(amount);
+							order.setDate(date.toLocalDate());
+							order.setTime(time.toLocalTime());
+							order.setStatus(status);
+							order.setMessage(message);
+							order.addMealOrder(mOrder);
+							Restaurant rest = new Restaurant();
+							rest.setName(restName);
+							order.setRestaurant(rest);
+							orders.add(order);
+							
+						}else {
+							orders.get(orders.size()-1).addMealOrder(mOrder);
+						}
+					
+					}
+			}
+				
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return orders;
+	}
+		
+		
+	
+
+	public Map<String, Set<Cuisine>> getAllRestCu(Restaurant restaurant) throws MySqlException{
+		Map<String, Set<Cuisine>>map = new HashMap<>();
+		String sql = "select * from restaurant inner join restaurant_cuisine on "
+				+ "restaurant.id_restaurant = restaurant_cuisine.id_restaurant inner join cuisine on "
+				+ "cuisine.id_cuisine = restaurant_cuisine.id_cuisine";
+		ResultSet rs = null;
+		
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				String restName = rs.getString("name_restaurant");
+				int idCuisine =  rs.getInt("id_cuisine");
+				String cuName = rs.getString("name_cuisine");
+				
+				if(!map.containsKey(restName)) {
+					HashSet<Cuisine> cuisines = new HashSet<Cuisine>();
+					map.put(restName, cuisines);
+					Cuisine cuisine = new Cuisine();
+					cuisine.setIdCuisine(idCuisine);
+					cuisine.setName(cuName);
+					cuisines.add(cuisine);
+				}
+				else if(map.containsKey(restName)) {
+					Set<Cuisine>cuisines = map.get(restName);
+					Cuisine cuisine = new Cuisine();
+					cuisine.setIdCuisine(idCuisine);;
+					cuisine.setName(cuName);
+					cuisines.add(cuisine);
+										
+					}
+				}
+										
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return map;
+	}
+
+	public Restaurant getRestByName(Restaurant restaurant) throws MySqlException{
+		Restaurant r1 = new Restaurant();
+		String sql =  "SELECT * from restaurant where restaurant.name_restaurant = ?";
+		ResultSet rs = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setString(1, restaurant.getName());
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				r1.setName(rs.getString("name_restaurant"));
+				r1.setCity(rs.getString("city"));
+				r1.setMunicipallity(rs.getString("municipality"));
+				r1.setMinOrder(rs.getDouble("min_order"));
+				r1.setIdRestaurant(rs.getInt("id_restaurant"));
+				r1.setOpenTime(rs.getTime("open_time").toLocalTime());
+				r1.setCloseTime(rs.getTime("close_time").toLocalTime());
+				r1.setPhoto(rs.getString("photo_restaurant"));
+				
+			}
+						
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return r1;
+		// TODO Auto-generated method stub
+		
+	}
+
+	public List<Order> getOrders4Rest(Restaurant restaurant) throws MySqlException{
+		List<Order>orders = new ArrayList<Order>();
+		/*String sql = "select * FROM `order` inner join address on `order`.`id_address` = address.id_address "
+				+ "inner join meal_order on `order`.id_order = meal_order.id_order inner join meal on "
+				+ "meal.id_meal = meal_order.id_meal where `order`.`id_restaurant` = ? order BY `order`.`id_order` DESC";*/
+		String sql = "select * FROM `order` inner join address on `order`.`id_address` = address.id_address "
+				+ "inner join user on `order`.id_user = user.id_user inner join meal_order on "
+				+ "`order`.id_order = meal_order.id_order inner join meal on meal.id_meal = meal_order.id_meal "
+				+ "where `order`.`id_restaurant` = ? order BY `order`.`id_order` DESC";
+		ResultSet rs = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+		
+			ps.setInt(1, restaurant.getIdRestaurant());
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				
+				int id_order =  rs.getInt("id_order");
+				double amount = rs.getDouble("amount");
+				Date date = rs.getDate("date");
+				Time time = rs.getTime("time");
+				String status = rs.getString("status");
+				String message = rs.getString("message_order");
+				String municipality = rs.getString("municipality_a");
+				String streetName = rs.getString("street_name");
+				String streetNo = rs.getString("street_number");
+				String appNo = rs.getString("appartment_number");
+				String lastName = rs.getString("last_name_a");
+				int idMealOrder = rs.getInt("id_meal_order");
+				int quantity = rs.getInt("quantity");
+				String comment = rs.getString("comment");
+				String nameMeal = rs.getString("name_meal");
+				double price = rs.getDouble("price");
+				String size = rs.getString("size");
+				
+				String phoneNumber = rs.getString("phone_number");
+				int idUser = rs.getInt("id_user");
+				
+				User user = new User();
+				user.setIdUser(idUser);
+				user.setPhoneNumber(phoneNumber);
+				
+				Meal m = new Meal();
+				m.setName(nameMeal);
+				m.setPrice(price);
+				m.setSize(size);
+				MealOrder mOrder = new MealOrder();
+				mOrder.setMeal(m);
+				mOrder.setIdMealOrder(idMealOrder);
+				mOrder.setQuantity(quantity);
+				mOrder.setComment(comment);
+					if(orders.size() == 0) {
+						Order order = new Order();
+						order.setIdOrder(id_order);
+						order.setAmount(amount);
+						order.setDate(date.toLocalDate());
+						order.setTime(time.toLocalTime());
+						order.setStatus(status);
+						order.setMessage(message);
+						
+						order.setUser(user);
+						
+						Address a =  new Address();
+						a.setMunicipality(municipality);
+						a.setStreetName(streetName);
+						a.setStreetNo(streetNo);
+						a.setAppLastName(lastName);
+						a.setAppNumber(appNo);
+						order.setAddress(a);
+						order.addMealOrder(mOrder);
+						orders.add(order);
+						
+						
+					} else if(orders.get(orders.size()-1).getIdOrder() != id_order){
+							Order order = new Order();
+							order.setIdOrder(id_order);
+							order.setAmount(amount);
+							order.setDate(date.toLocalDate());
+							order.setTime(time.toLocalTime());
+							order.setStatus(status);
+							order.setMessage(message);
+							order.addMealOrder(mOrder);
+							
+							order.setUser(user);
+							
+							Address a =  new Address();
+							a.setMunicipality(municipality);
+							a.setStreetName(streetName);
+							a.setStreetNo(streetNo);
+							a.setAppLastName(lastName);
+							a.setAppNumber(appNo);
+							order.setAddress(a);
+							orders.add(order);
+							
+						}else {
+							orders.get(orders.size()-1).addMealOrder(mOrder);
+							
+						}
+				
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return orders;
+	}
+
+	public void insertMeal(DtoMealRest dtoMealRest) throws MySqlException{
+		String sql = "insert into meal (name_meal, price, size, id_cuisine, id_category) values (?, ?, ?, ?, ?)";
+		ResultSet rs = null;
+		int idMeal = 0;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setString(1, dtoMealRest.getName());
+			ps.setDouble(2, dtoMealRest.getPrice());
+			ps.setString(3, dtoMealRest.getSize());
+			ps.setInt(4, dtoMealRest.getCuisine().getIdCuisine());
+			ps.setInt(5, dtoMealRest.getCategory().getIdCategory());
+			ps.execute();
+			
+			String sql2 = "select max(id_meal) from meal";
+			PreparedStatement ps2 = MyConnection.getInstance().getConnection().prepareStatement(sql2);
+			rs = ps2.executeQuery();
+			while(rs.next()) {
+				idMeal = rs.getInt("max(id_meal)");
+			}
+			
+			String sql3 = "INSERT INTO `meal_restaurant`(`id_restaurant`, `id_meal`) VALUES (?,?) ";
+			PreparedStatement ps3 = MyConnection.getInstance().getConnection().prepareStatement(sql3);
+			ps3.setInt(1, dtoMealRest.getRestaurant().getIdRestaurant());
+			ps3.setInt(2, idMeal);
+			ps3.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	public User selectOneUser(User user) throws MySqlException {
+		String sql = "select * from user where user.username = ?";
+		ResultSet rs = null;
+		try {
+			PreparedStatement ps = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			ps.setString(1, user.getUsername());
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				user.setEmail(rs.getString("email"));
+				user.setPhoneNumber(rs.getString("phone_number"));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return user;
+		
+		
+	}
+
+	public void updatePass(User user) throws MySqlException {
+		String sql = "UPDATE `user` SET `password`= ? WHERE user.username = ?";
+		PreparedStatement pStatement;
+		try {
+			pStatement = MyConnection.getInstance().getConnection().prepareStatement(sql);
+			pStatement.setString(1, user.getPassword());
+			pStatement.setString(2, user.getUsername());
+			pStatement.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+
+	
+
+	
+
+}
